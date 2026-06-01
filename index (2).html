@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LIMS 4.0 Pro - Sistema de Gestión Farmacéutica 3D</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        :root {
+            --bg-space: #030712;
+            --panel-bg: rgba(15, 23, 42, 0.45);
+            --primary: #00e5ff;
+            --accent: #00ff88;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border-glow: rgba(0, 229, 255, 0.2);
+            --card-shadow: rgba(0, 229, 255, 0.1);
+        }
+
+        html, body {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: var(--bg-space); color: var(--text-main);
+            font-family: 'Segoe UI', Roboto, sans-serif; overflow-x: hidden;
+            perspective: 1600px;
+        }
+
+        .space-background {
+            position: fixed; top: -50%; left: -50%; width: 200%; height: 200%;
+            background-image: 
+                linear-gradient(rgba(0, 229, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 229, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px; transform: rotateX(45deg) translateZ(-400px);
+            z-index: 1; pointer-events: none;
+        }
+
+        .stage-3d {
+            position: relative; width: 100%; padding: 40px 0; z-index: 2;
+            transform-style: preserve-3d; transition: transform 0.1s ease-out; will-change: transform;
+        }
+
+        header { text-align: center; margin-bottom: 40px; transform: translateZ(120px); transform-style: preserve-3d; }
+        header h1 { font-size: 2.2rem; margin: 0; text-transform: uppercase; letter-spacing: 4px; color: #ffffff; text-shadow: 0 0 20px rgba(0, 229, 255, 0.6); }
+        header p { color: var(--text-muted); font-size: 14px; letter-spacing: 2px; }
+
+        .tabs-container { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin-bottom: 40px; transform: translateZ(90px); transform-style: preserve-3d; padding: 0 10px; }
+        .tab-btn { background: rgba(30, 41, 59, 0.7); border: 1px solid var(--border-glow); color: var(--text-muted); padding: 12px 24px; font-weight: bold; border-radius: 8px; cursor: pointer; transition: all 0.3s ease; }
+        .tab-btn:hover, .tab-btn.active { color: #ffffff; border-color: var(--primary); background: rgba(0, 229, 255, 0.1); box-shadow: 0 0 15px var(--card-shadow); transform: translateZ(15px); }
+
+        .content-container { max-width: 1100px; margin: 0 auto; padding: 0 20px; transform-style: preserve-3d; }
+        .tab-content { display: none; transform-style: preserve-3d; }
+        .tab-content.active { display: block; }
+
+        .card-3d {
+            background: var(--panel-bg); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            border: 1px solid var(--border-glow); border-radius: 20px; padding: 35px; margin-bottom: 40px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.4), inset 0 0 20px rgba(0, 229, 255, 0.05);
+            transform: translateZ(50px); transform-style: preserve-3d;
+        }
+
+        h2 { color: var(--primary); margin-top: 0; font-size: 1.3rem; text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 0 10px rgba(0, 229, 255, 0.3); }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        input, select, button { background: #020617; color: #ffffff; border: 1px solid var(--border-glow); padding: 12px; border-radius: 8px; outline: none; font-size: 13px; }
+        
+        button.btn-add { background: linear-gradient(135deg, #00d2ff, #0056b3); border: none; cursor: pointer; font-weight: bold; text-transform: uppercase; transition: 0.3s; }
+        button.btn-add:hover { box-shadow: 0 0 15px var(--primary); transform: scale(1.02); }
+
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; border-collapse: separate; border-spacing: 0 10px; }
+        th { color: var(--text-muted); text-transform: uppercase; font-size: 11px; padding: 12px; text-align: left; }
+        td { background: rgba(255, 255, 255, 0.02); border-top: 1px solid rgba(0, 229, 255, 0.1); border-bottom: 1px solid rgba(0, 229, 255, 0.1); padding: 15px; font-size: 13.5px; }
+        td:first-child { border-left: 1px solid rgba(0, 229, 255, 0.1); border-radius: 8px 0 0 8px; }
+        td:last-child { border-right: 1px solid rgba(0, 229, 255, 0.1); border-radius: 0 8px 8px 0; }
+
+        .badge { padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+        .badge-disponible { background: rgba(0, 255, 136, 0.1); color: var(--accent); border: 1px solid var(--accent); }
+        .badge-uso { background: rgba(255, 170, 0, 0.1); color: #ffa300; border: 1px solid #ffa300; }
+        
+        /* BOTONES DE COMPARTICIÓN EXPANDIDA */
+        .share-layout { display: grid; grid-template-columns: 1fr repeat(auto-fit, minmax(200px, 1fr)); gap: 30px; margin-top: 20px; align-items: center; }
+        .share-buttons-container { display: flex; flex-direction: column; gap: 12px; }
+        .btn-share { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 14px; font-weight: bold; border-radius: 10px; border: none; cursor: pointer; text-decoration: none; font-size: 14px; transition: 0.3s; }
+        .btn-whatsapp { background: #25D366; color: white; }
+        .btn-whatsapp:hover { box-shadow: 0 0 15px #25D366; }
+        .btn-email { background: #ea4335; color: white; }
+        .btn-email:hover { box-shadow: 0 0 15px #ea4335; }
+        .btn-copy { background: var(--primary); color: #000; }
+        .btn-copy:hover { box-shadow: 0 0 15px var(--primary); }
+        
+        .qr-display { background: white; padding: 15px; border-radius: 14px; width: 130px; height: 130px; display: flex; justify-content: center; align-items: center; box-shadow: 0 0 25px rgba(0,229,255,0.2); margin: 0 auto; }
+        .sync-status { text-align: center; font-size: 12px; color: var(--accent); margin-top: -20px; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+
+    <div class="space-background"></div>
+
+    <div class="stage-3d" id="spaceStage">
+
+        <header>
+            <h1>Laboratorio de Desarrollo Analítico</h1>
+            <p>SISTEMA LIMS 4.0 - MÓDULO DE INTERCONEXIÓN GLOBAL SYNC</p>
+        </header>
+
+        <div class="sync-status" id="statusDb">⚡ Conectando de forma segura con la base de datos global...</div>
+
+        <div class="tabs-container">
+            <button class="tab-btn active" onclick="openTab(event, 'equipos')">🔬 Módulos e Instrumentos</button>
+            <button class="tab-btn" onclick="openTab(event, 'insumos')">📦 Control de Insumos</button>
+            <button class="tab-btn" onclick="openTab(event, 'bitacora')">📝 Bitácora Analítica</button>
+            <button class="tab-btn" onclick="openTab(event, 'compartir')" style="border-color: var(--accent); color: white;">🔗 Compartir por WhatsApp / Enlace</button>
+        </div>
+
+        <div class="content-container">
+
+            <div id="equipos" class="tab-content active">
+                <div class="card-3d">
+                    <h2>➕ Registrar Nuevo Módulo Analítico</h2>
+                    <div class="form-grid">
+                        <input type="text" id="eqPno" placeholder="PNO (Ej: PNO-CQUI-102)">
+                        <input type="text" id="eqDesc" placeholder="Descripción del Equipo">
+                        <input type="text" id="eqMod" placeholder="Marca / Modelo">
+                        <input type="text" id="eqCal" placeholder="Fecha Calibración">
+                        <button class="btn-add" onclick="agregarEquipo()">Añadir Módulo</button>
+                    </div>
+                    <h2>🔬 Estado Operativo de Instrumentos</h2>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr><th>PNO / ID</th><th>Descripción</th><th>Modelo / Marca</th><th>Próxima Calibración</th><th>Estatus</th><th>Analista Asignado</th><th>Acción</th></tr>
+                            </thead>
+                            <tbody id="dataEquipos"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="insumos" class="tab-content">
+                <div class="card-3d">
+                    <h2>📦 Ingreso de Reactivos y Lotes</h2>
+                    <div class="form-grid">
+                        <select id="insCat"><option>Materia Prima</option><option>Reactivo</option><option>Estándar de Ref.</option></select>
+                        <input type="text" id="insDesc" placeholder="Sustancia Analítica">
+                        <input type="text" id="insLot" placeholder="Lote Analítico">
+                        <input type="text" id="insStock" placeholder="Existencia">
+                        <select id="insAlerta"><option value="normal">Estatus Conforme</option><option value="warning">Próximo a Caducar ⚠️</option><option value="danger">Lote Agotado ❌</option></select>
+                        <button class="btn-add" onclick="agregarInsumo()">Cargar Lote</button>
+                    </div>
+                    <h2>📦 Inventario de Sustancias y Reactivos</h2>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr><th>Categoría</th><th>Sustancia</th><th>Lote Real</th><th>Stock</th><th>Condición Crítica</th></tr>
+                            </thead>
+                            <tbody id="dataInsumos"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="bitacora" class="tab-content">
+                <div class="card-3d">
+                    <h2>📝 Asignar Ensayo Farmacéutico</h2>
+                    <div class="form-grid">
+                        <input type="text" id="anDate" placeholder="Fecha">
+                        <select id="anUserTitle"><option>Ing. Químico</option><option>Q.F.B.</option><option>Q.F.I.</option></select>
+                        <input type="text" id="anUser" placeholder="Nombre del Analista">
+                        <input type="text" id="anMuestra" placeholder="Muestra Activa">
+                        <input type="text" id="anPrueba" placeholder="Protocolo / Ensayo">
+                        <input type="text" id="anRes" placeholder="Resultado Crítico">
+                        <button class="btn-add" onclick="agregarAnalisis()">Firmar Bitácora</button>
+                    </div>
+                    <h2>📝 Trazabilidad de Ensayos Realizados</h2>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr><th>Fecha</th><th>Especialista Responsable</th><th>Muestra</th><th>Ensayo Aplicado</th><th>Resultado</th></tr>
+                            </thead>
+                            <tbody id="dataAnalisis"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="compartir" class="tab-content">
+                <div class="card-3d">
+                    <h2>🔗 Canales de Transferencia Inmediata</h2>
+                    <p style="font-size:13.5px; color:var(--text-muted); margin-bottom: 25px;">Usa estos accesos rápidos para mandar la plataforma por la vía que prefieras. Al estar en la nube, todos verán exactamente los mismos reactivos, análisis y estados en tiempo real.</p>
+                    
+                    <div class="share-layout">
+                        <div class="share-buttons-container">
+                            <button onclick="compartirWhatsApp()" class="btn-share btn-whatsapp">💬 Compartir por WhatsApp</button>
+                            <button onclick="compartirCorreo()" class="btn-share btn-email">✉️ Enviar por Correo Electrónico</button>
+                            <button onclick="copiarUrlAlPortapapeles()" class="btn-share btn-copy">📋 Copiar Enlace del Servidor</button>
+                        </div>
+                        
+                        <div style="text-align:center;">
+                            <div class="qr-display" id="qrcode"></div>
+                            <p style="font-size:11px; color:var(--accent); font-weight:bold; margin-top:10px; letter-spacing:1px;">CÓDIGO QR SINCRONIZADO</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // CONFIGURACIÓN DE LA BASE DE DATOS EN LA NUBE RECEPTORA (COMPLETAMENTE ABIERTA Y PÚBLICA PARA EL PROYECTO)
+        const BIN_ID = "665ac27ae41b4d34e4fd461a"; 
+        const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
+        const API_KEY = "$2a$10$Rj6zZ5Usc1Uj3D78WlH8u.8LqMv7T6fBvDk3lqU9ZscYx7vR5C8fC"; // Llave pública de lectura/escritura
+
+        let bd = {};
+
+        window.onload = function() {
+            cargarDatosDesdeNube();
+            activarEfectoGiro3D();
+            configurarModuloCompartir();
+        };
+
+        // LLAMADA HTTP ASÍNCRONA PARA TRAER LO QUE OTROS DISPOSITIVOS HAYAN GUARDADO
+        async function cargarDatosDesdeNube() {
+            try {
+                const res = await fetch(`${API_URL}/latest`, {
+                    headers: { "X-Master-Key": API_KEY }
+                });
+                const json = await res.json();
+                bd = json.record;
+                document.getElementById('statusDb').innerText = "✅ Sincronizado con el Servidor Global en Tiempo Real";
+                renderizarTodo();
+            } catch (error) {
+                document.getElementById('statusDb').innerText = "❌ Error de Red. Trabajando de manera local temporal.";
+                bd = { equipos: [], insumos: [], analisis: [] };
+                renderizarTodo();
+            }
+        }
+
+        async function guardarDatosEnNube() {
+            document.getElementById('statusDb').innerText = "⏳ Sincronizando cambios en la nube...";
+            try {
+                await fetch(API_URL, {
+                    method: 'PUT',
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-Master-Key": API_KEY
+                    },
+                    body: JSON.stringify(bd)
+                });
+                document.getElementById('statusDb').innerText = "✅ Cambios guardados en la nube para todos los dispositivos";
+            } catch (error) {
+                document.getElementById('statusDb').innerText = "⚠️ No se pudo subir el cambio a internet.";
+            }
+        }
+
+        function openTab(evt, tabName) {
+            const contents = document.getElementsByClassName("tab-content");
+            for (let i = 0; i < contents.length; i++) contents[i].classList.remove("active");
+            const buttons = document.getElementsByClassName("tab-btn");
+            for (let i = 0; i < buttons.length; i++) buttons[i].classList.remove("active");
+            document.getElementById(tabName).classList.add("active");
+            evt.currentTarget.classList.add("active");
+        }
+
+        function configurarModuloCompartir() {
+            const urlActual = window.location.href;
+            document.getElementById("qrcode").innerHTML = "";
+            new QRCode(document.getElementById("qrcode"), {
+                text: urlActual,
+                width: 110,
+                height: 110,
+                colorDark : "#020617",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.M
+            });
+        }
+
+        // CONTROLADORES DE COMPARTICIÓN MULTIPLE DESDE CELULARES
+        function compartirWhatsApp() {
+            const url = window.location.href;
+            const texto = encodeURIComponent(`🔬 ¡Hola! Te comparto el link directo a nuestro Sistema de Gestión Farmacéutica LIMS 4.0 Pro interactivo: ${url}`);
+            window.open(`https://api.whatsapp.com/send?text=${texto}`, '_blank');
+        }
+
+        function compartirCorreo() {
+            const url = window.location.href;
+            const asunto = encodeURIComponent("Plataforma Interactiva LIMS 4.0 - Laboratorio");
+            const cuerpo = encodeURIComponent(`Estimado evaluador,\n\nAdjunto el enlace de acceso directo al Módulo de Desarrollo Analítico LIMS: \n${url}\n\nLos cambios realizados se actualizan automáticamente.`);
+            window.location.href = `mailto:?subject=${asunto}&body=${cuerpo}`;
+        }
+
+        function copiarUrlAlPortapapeles() {
+            navigator.clipboard.writeText(window.location.href).then(() => {
+                alert("🔗 Enlace del servidor copiado al portapapeles con éxito.");
+            });
+        }
+
+        function renderizarTodo() {
+            renderEquipos();
+            renderInsumos();
+            renderAnalisis();
+        }
+
+        function activarEfectoGiro3D() {
+            const stage = document.getElementById('spaceStage');
+            document.addEventListener('mousemove', (e) => {
+                const rotacionX = (window.innerHeight / 2 - e.clientY) / 35;
+                const rotacionY = (window.innerWidth / 2 - e.clientX) / -35;
+                stage.style.transform = `rotateX(${rotacionX}deg) rotateY(${rotacionY}deg)`;
+            });
+        }
+
+        function renderEquipos() {
+            const tbody = document.getElementById('dataEquipos'); tbody.innerHTML = "";
+            if(!bd.equipos) return;
+            bd.equipos.forEach((eq, idx) => {
+                let badge = eq.enUso ? `<span class="badge badge-uso">En Uso</span>` : `<span class="badge badge-disponible">Disponible</span>`;
+                let accion = eq.enUso ? 
+                    `<button onclick="liberarEquipo(${idx})" style="background:#e74c3c; padding:6px 12px; border:none; border-radius:6px; cursor:pointer;">Liberar</button>` :
+                    `<div style="display:flex; gap:5px;">
+                        <select id="title-${idx}" style="padding:4px; font-size:11px;"><option>Ing. Químico</option><option>Q.F.B.</option><option>Q.F.I.</option></select>
+                        <input type="text" id="user-${idx}" placeholder="Analista" style="padding:4px; width:80px; font-size:11px;">
+                        <button onclick="ocuparEquipo(${idx})" style="background:var(--accent); color:#000; font-weight:bold; padding:4px 8px; border:none; border-radius:6px; cursor:pointer;">✔</button>
+                     </div>`;
+                tbody.innerHTML += `<tr><td><strong>${eq.pno}</strong></td><td>${eq.desc}</td><td>${eq.mod}</td><td>${eq.cal}</td><td>${badge}</td><td>${eq.usuario || 'Libre'}</td><td>${accion}</td></tr>`;
+            });
+        }
+
+        function ocuparEquipo(idx) {
+            const t = document.getElementById(`title-${idx}`).value; const u = document.getElementById(`user-${idx}`).value;
+            if(!u) return;
+            bd.equipos[idx].enUso = true; bd.equipos[idx].usuario = `${t} ${u}`;
+            renderizarTodo(); guardarDatosEnNube();
+        }
+
+        function liberarEquipo(idx) {
+            bd.equipos[idx].enUso = false; bd.equipos[idx].usuario = "";
+            renderizarTodo(); guardarDatosEnNube();
+        }
+
+        function agregarEquipo() {
+            const pno = document.getElementById('eqPno').value; const desc = document.getElementById('eqDesc').value;
+            const mod = document.getElementById('eqMod').value; const cal = document.getElementById('eqCal').value;
+            if(!pno || !desc) return;
+            if(!bd.equipos) bd.equipos = [];
+            bd.equipos.push({pno, desc, mod, cal, enUso:false, usuario:""});
+            renderizarTodo(); guardarDatosEnNube();
+            document.getElementById('eqPno').value = ''; document.getElementById('eqDesc').value = '';
+        }
+
+        function renderInsumos() {
+            const tbody = document.getElementById('dataInsumos'); tbody.innerHTML = "";
+            if(!bd.insumos) return;
+            bd.insumos.forEach(ins => {
+                tbody.innerHTML += `<tr><td>${ins.cat}</td><td><strong>${ins.desc}</strong></td><td>${ins.lote}</td><td>${ins.stock}</td><td>${ins.alerta.toUpperCase()}</td></tr>`;
+            });
+        }
+
+        function agregarInsumo() {
+            const cat = document.getElementById('insCat').value; const desc = document.getElementById('insDesc').value;
+            const lote = document.getElementById('insLot').value; const stock = document.getElementById('insStock').value;
+            const alerta = document.getElementById('insAlerta').value;
+            if(!desc || !lote) return;
+            if(!bd.insumos) bd.insumos = [];
+            bd.insumos.push({cat, desc, lote, stock, alerta});
+            renderizarTodo(); guardarDatosEnNube();
+            document.getElementById('insDesc').value = ''; document.getElementById('insLot').value = '';
+        }
+
+        function renderAnalisis() {
+            const tbody = document.getElementById('dataAnalisis'); tbody.innerHTML = "";
+            if(!bd.analisis) return;
+            bd.analisis.forEach(an => {
+                tbody.innerHTML += `<tr><td>${an.fecha}</td><td><strong>${an.analista}</strong></td><td>${an.muestra}</td><td>${an.prueba}</td><td><span style="color:var(--primary); font-weight:bold;">${an.res}</span></td></tr>`;
+            });
+        }
+
+        function agregarAnalisis() {
+            const fecha = document.getElementById('anDate').value; const tit = document.getElementById('anUserTitle').value;
+            const nom = document.getElementById('anUser').value; const mue = document.getElementById('anMuestra').value;
+            const pru = document.getElementById('anPrueba').value; const res = document.getElementById('anRes').value;
+            if(!nom || !mue) return;
+            if(!bd.analisis) bd.analisis = [];
+            bd.analisis.push({fecha: fecha || 'Hoy', analista: `${tit} ${nom}`, muestra: mue, prueba: pru, res});
+            renderizarTodo(); guardarDatosEnNube();
+            document.getElementById('anUser').value = ''; document.getElementById('anMuestra').value = '';
+        }
+    </script>
+</body>
+</html>
