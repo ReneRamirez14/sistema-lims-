@@ -3,121 +3,199 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LIMS 4.0 Pro - Sistema de Gestión Farmacéutica 3D</title>
+    <title>LIMS 4.0 Pro - Sistema de Gestión Farmacéutica</title>
+    <!-- Librería oficial para generar códigos QR de forma local -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root {
-            --bg-space: #030712;
-            --panel-bg: rgba(15, 23, 42, 0.45);
-            --primary: #00e5ff;
-            --accent: #00ff88;
-            --text-main: #f1f5f9;
-            --text-muted: #94a3b8;
-            --border-glow: rgba(0, 229, 255, 0.2);
-            --card-shadow: rgba(0, 229, 255, 0.1);
+            --bg-space: #f0f4f8; /* Azul muy claro de fondo */
+            --panel-bg: #ffffff; /* Fondo blanco para las tarjetas y paneles */
+            --primary: #0066cc;  /* Azul corporativo/laboratorio */
+            --accent: #00a86b;   /* Verde para éxitos o disponibilidad */
+            --text-main: #1e293b; /* Texto oscuro principal para máxima legibilidad */
+            --text-muted: #64748b; /* Texto secundario gris */
+            --border-glow: #cbd5e1; /* Bordes limpios grisáceos */
+            --card-shadow: rgba(0, 102, 204, 0.08);
         }
 
         html, body {
             margin: 0; padding: 0; width: 100%; height: 100%;
-            background-color: var(--bg-space); color: var(--text-main);
+            background: linear-gradient(135deg, #e6f0fa 0%, #f8fafc 100%); /* Fondo azul claro y blanco */
+            color: var(--text-main);
             font-family: 'Segoe UI', Roboto, sans-serif; overflow-x: hidden;
-            perspective: 1600px;
         }
 
-        /* REJILLA HOLOGRÁFICA TRIDIMENSIONAL DE FONDO */
-        .space-background {
-            position: fixed; top: -50%; left: -50%; width: 200%; height: 200%;
-            background-image: 
-                linear-gradient(rgba(0, 229, 255, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 229, 255, 0.03) 1px, transparent 1px);
-            background-size: 50px 50px; transform: rotateX(45deg) translateZ(-400px);
-            z-index: 1; pointer-events: none;
+        /* ESCENARIO MAESTRO PLANO */
+        .stage-flat {
+            position: relative; width: 100%; padding: 0; z-index: 2;
         }
 
-        /* ESCENARIO MAESTRO QUE GIRA CON EL MOUSE */
-        .stage-3d {
-            position: relative; width: 100%; padding: 40px 0; z-index: 2;
-            transform-style: preserve-3d; transition: transform 0.1s ease-out; will-change: transform;
-        }
+        /* ENCABEZADO SUPERIOR ESTÁTICO */
+        header { text-align: center; padding: 30px 0 10px 0; }
+        header h1 { font-size: 1.8rem; margin: 0; text-transform: uppercase; letter-spacing: 4px; color: var(--primary); }
+        header p { color: var(--text-muted); font-size: 12px; letter-spacing: 2px; margin-top: 5px; }
 
-        header { text-align: center; margin-bottom: 40px; transform: translateZ(120px); transform-style: preserve-3d; }
-        header h1 { font-size: 2.2rem; margin: 0; text-transform: uppercase; letter-spacing: 4px; color: #ffffff; text-shadow: 0 0 20px rgba(0, 229, 255, 0.6); }
-        header p { color: var(--text-muted); font-size: 14px; letter-spacing: 2px; }
-
-        /* NAVEGACIÓN EN PESTAÑAS FLOTANTES */
-        .tabs-container { display: flex; justify-content: center; flex-wrap: wrap; gap: 15px; margin-bottom: 40px; transform: translateZ(90px); transform-style: preserve-3d; padding: 0 10px; }
-        .tab-btn { background: rgba(30, 41, 59, 0.7); border: 1px solid var(--border-glow); color: var(--text-muted); padding: 12px 28px; font-weight: bold; border-radius: 8px; cursor: pointer; transition: all 0.3s ease; }
-        .tab-btn:hover, .tab-btn.active { color: #ffffff; border-color: var(--primary); background: rgba(0, 229, 255, 0.1); box-shadow: 0 0 15px var(--card-shadow); transform: translateZ(15px); }
-
-        /* PANTALLAS DE PANEL INTERACTIVAS */
-        .content-container { max-width: 1100px; margin: 0 auto; padding: 0 20px; transform-style: preserve-3d; }
-        .tab-content { display: none; transform-style: preserve-3d; }
-        .tab-content.active { display: block; }
-
-        .card-3d {
-            background: var(--panel-bg); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
-            border: 1px solid var(--border-glow); border-radius: 20px; padding: 35px; margin-bottom: 40px;
-            box-shadow: 0 30px 60px rgba(0,0,0,0.4), inset 0 0 20px rgba(0, 229, 255, 0.05);
-            transform: translateZ(50px); transform-style: preserve-3d; transition: box-shadow 0.3s ease;
-        }
-
-        h2 { color: var(--primary); margin-top: 0; font-size: 1.3rem; text-transform: uppercase; letter-spacing: 2px; transform: translateZ(40px); text-shadow: 0 0 10px rgba(0, 229, 255, 0.3); }
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 30px; transform: translateZ(30px); }
-        input, select, button { background: #020617; color: #ffffff; border: 1px solid var(--border-glow); padding: 12px; border-radius: 8px; outline: none; font-size: 13px; }
+        .content-container { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
         
-        button.btn-add { background: linear-gradient(135deg, #00d2ff, #0056b3); border: none; cursor: pointer; font-weight: bold; text-transform: uppercase; transition: 0.3s; }
-        button.btn-add:hover { box-shadow: 0 0 15px var(--primary); transform: scale(1.03); }
+        /* SISTEMA DE PANTALLAS (PAGINACIÓN INDEPENDIENTE) */
+        .view-panel { display: none; }
+        .view-panel.active-view { display: block; }
 
-        /* DISEÑO DE TABLAS DE DATOS */
-        .table-wrapper { transform: translateZ(25px); overflow-x: auto; }
-        table { width: 100%; border-collapse: separate; border-spacing: 0 10px; }
+        .card-flat {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-glow); border-radius: 20px; padding: 35px; margin-bottom: 40px;
+            box-shadow: 0 10px 25px var(--card-shadow);
+        }
+
+        /* PORTADA HERO EXCLUSIVA CON TONOS AZUL Y BLANCO */
+        .hero-portada {
+            width: 100%;
+            padding: 60px 20px;
+            box-sizing: border-box;
+            text-align: center;
+            background: linear-gradient(135deg, #0044cc 0%, #0066cc 100%); /* Degradado azul intenso */
+            border-bottom: 3px solid #002288;
+            margin-bottom: 35px;
+            border-radius: 0 0 25px 25px;
+            box-shadow: 0 4px 15px rgba(0, 68, 204, 0.15);
+        }
+
+        .hero-portada h1 {
+            font-size: 3.5rem;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 6px;
+            color: #ffffff; /* Letras blancas */
+            font-weight: 800;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .hero-portada p {
+            color: #b3d1ff; /* Azul claro suave para el subtítulo */
+            font-size: 13px;
+            letter-spacing: 3px;
+            margin-top: 12px;
+            margin-bottom: 0;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        h2 { color: var(--primary); margin-top: 0; font-size: 1.4rem; text-transform: uppercase; letter-spacing: 2px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; }
+        
+        /* MENÚ DE ACCESOS DIRECTOS (DASHBOARD PRINCIPAL) */
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-top: 20px; }
+        .menu-card {
+            background: #f8fafc; border: 1px solid var(--border-glow); border-radius: 15px;
+            padding: 25px; text-align: center; cursor: pointer; transition: all 0.2s ease;
+        }
+        .menu-card:hover {
+            border-color: var(--primary); background: #edf5ff;
+            transform: translateY(-4px);
+            box-shadow: 0 6px 15px rgba(0, 102, 204, 0.1);
+        }
+        .menu-card .icon { font-size: 2.5rem; margin-bottom: 15px; display: block; }
+        .menu-card h3 { margin: 0 0 10px 0; color: var(--primary); font-size: 16px; letter-spacing: 1px; }
+        .menu-card p { margin: 0; color: var(--text-muted); font-size: 12px; line-height: 1.4; }
+
+        /* BOTÓN DE RETORNO */
+        .btn-back {
+            background: #fff5f5; border: 1px solid #fc8181; color: #c53030;
+            padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold;
+            display: inline-flex; align-items: center; gap: 8px; margin-bottom: 25px; transition: 0.2s;
+            margin-top: 20px;
+        }
+        .btn-back:hover { background: #c53030; color: white; }
+
+        /* DISEÑO DE FORMULARIOS Y TABLAS */
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        input, select, button { background: #ffffff; color: var(--text-main); border: 1px solid var(--border-glow); padding: 12px; border-radius: 8px; outline: none; font-size: 13px; }
+        input:focus, select:focus { border-color: var(--primary); background: #f0f7ff; }
+        
+        button.btn-add { background: linear-gradient(135deg, #0066cc, #0044cc); color: white; border: none; cursor: pointer; font-weight: bold; text-transform: uppercase; transition: 0.2s; }
+        button.btn-add:hover { box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3); filter: brightness(1.1); }
+
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; border-collapse: separate; border-spacing: 0 8px; }
         th { color: var(--text-muted); text-transform: uppercase; font-size: 11px; letter-spacing: 1px; padding: 12px; text-align: left; }
-        td { background: rgba(255, 255, 255, 0.02); border-top: 1px solid rgba(0, 229, 255, 0.1); border-bottom: 1px solid rgba(0, 229, 255, 0.1); padding: 15px; font-size: 13.5px; }
-        td:first-child { border-left: 1px solid rgba(0, 229, 255, 0.1); border-radius: 8px 0 0 8px; }
-        td:last-child { border-right: 1px solid rgba(0, 229, 255, 0.1); border-radius: 0 8px 8px 0; }
-        tr:hover td { background: rgba(0, 229, 255, 0.08); color: #ffffff; }
+        td { background: #f8fafc; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; padding: 15px; font-size: 13.5px; color: var(--text-main); }
+        td:first-child { border-left: 1px solid #e2e8f0; border-radius: 8px 0 0 8px; }
+        td:last-child { border-right: 1px solid #e2e8f0; border-radius: 0 8px 8px 0; }
+        tr:hover td { background: #edf5ff; }
 
         .badge { padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
-        .badge-disponible { background: rgba(0, 255, 136, 0.1); color: var(--accent); border: 1px solid var(--accent); }
-        .badge-uso { background: rgba(255, 170, 0, 0.1); color: #ffa300; border: 1px solid #ffa300; }
-        .status-warning td { background: rgba(243, 156, 18, 0.08) !important; color: #ff9f43; }
-        .status-danger td { background: rgba(231, 76, 60, 0.08) !important; color: #ff6b6b; }
+        .badge-disponible { background: #e6fcf5; color: #0ca678; border: 1px solid #0ca678; }
+        .badge-uso { background: #fff9db; color: #f08c00; border: 1px solid #f08c00; }
+        
+        /* AJUSTES DE ALERTAS CRÍTICAS PARA TABLAS */
+        tr.alerta-warning td { background: #fff9db !important; color: #f08c00 !important; }
+        tr.alerta-danger td { background: #fff5f5 !important; color: #e03131 !important; }
 
-        /* INTERFAZ MODERNA PARA ACCESO POR QR Y ENLACES (ACTUALIZADA CON BOTONES DE COMPARTIR) */
-        .share-layout { display: grid; grid-template-columns: 1fr repeat(auto-fit, minmax(200px, 1fr)); gap: 30px; margin-top: 20px; transform: translateZ(20px); align-items: center; }
-        .link-box { background: #020617; border: 1px solid var(--border-glow); padding: 15px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        /* DISEÑO DE COMPARTICIÓN */
+        .share-layout { display: grid; grid-template-columns: 1fr repeat(auto-fit, minmax(200px, 1fr)); gap: 30px; align-items: center; }
+        .link-box { background: #f1f5f9; border: 1px solid var(--border-glow); padding: 15px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .share-buttons-container { display: flex; flex-direction: column; gap: 12px; }
-        .btn-share { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 14px; font-weight: bold; border-radius: 10px; border: none; cursor: pointer; font-size: 14px; transition: 0.3s; }
+        .btn-share { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 14px; font-weight: bold; border-radius: 10px; border: none; cursor: pointer; font-size: 14px; transition: 0.2s; }
+        .qr-display { background: white; padding: 15px; border-radius: 14px; width: 120px; height: 120px; display: flex; justify-content: center; align-items: center; margin: 0 auto; border: 1px solid var(--border-glow); }
         
-        .qr-display { background: white; padding: 15px; border-radius: 14px; width: 120px; height: 120px; display: flex; justify-content: center; align-items: center; box-shadow: 0 0 25px rgba(0,229,255,0.2); margin: 0 auto; }
-        
-        .backup-list { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; transform: translateZ(20px); }
-        .backup-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); }
+        .backup-list { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
+        .backup-item { display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; }
     </style>
 </head>
 <body>
 
-    <div class="space-background"></div>
+    <div class="stage-flat">
 
-    <div class="stage-3d" id="spaceStage">
+        <!-- ================= PANTALLA PRINCIPAL (DASHBOARD) ================= -->
+        <div id="view-inicio" class="view-panel active-view">
+            
+            <!-- PORTADA VISUAL EN AZUL Y BLANCO -->
+            <div class="hero-portada">
+                <h1>Química en Línea</h1>
+                <p>Módulo Inteligente de Control Global (LIMS 4.0 Pro)</p>
+            </div>
 
-        <header>
-            <h1>Laboratorio de Desarrollo Analítico</h1>
-            <p>Química en Línea - MÓDULO INTELIGENTE DE TRANSFERENCIA COMPARTIDA</p>
-        </header>
-
-        <div class="tabs-container">
-            <button class="tab-btn active" onclick="openTab(event, 'equipos')">🔬 Módulos e Instrumentos</button>
-            <button class="tab-btn" onclick="openTab(event, 'insumos')">📦 Control de Insumos</button>
-            <button class="tab-btn" onclick="openTab(event, 'bitacora')">📝 Bitácora Analítica</button>
-            <button class="tab-btn" onclick="openTab(event, 'seguridad')">🛡️ Copias de Seguridad</button>
-            <button class="tab-btn" onclick="openTab(event, 'compartir')" style="border-color: var(--accent); color: white;">🔗 Compartir Acceso</button>
+            <div class="content-container">
+                <div class="card-flat">
+                    <h2>🎛️ Panel de Control Principal</h2>
+                    <p style="color: var(--text-muted); font-size: 13px;">Bienvenido al sistema de gestión LIMS. Por favor, seleccione un módulo operativo para comenzar:</p>
+                    
+                    <div class="dashboard-grid">
+                        <div class="menu-card" onclick="cambiarPantalla('view-equipos')">
+                            <span class="icon">🔬</span>
+                            <h3>Módulos e Instrumentos</h3>
+                            <p>Estatus y calibración de equipos de alta precisión.</p>
+                        </div>
+                        <div class="menu-card" onclick="cambiarPantalla('view-insumos')">
+                            <span class="icon">📦</span>
+                            <h3>Control de Insumos</h3>
+                            <p>Inventario de reactivos, materias primas y alertas críticas.</p>
+                        </div>
+                        <div class="menu-card" onclick="cambiarPantalla('view-bitacora')">
+                            <span class="icon">📝</span>
+                            <h3>Bitácora Analítica</h3>
+                            <p>Registro y trazabilidad digital de ensayos farmacéuticos.</p>
+                        </div>
+                        <div class="menu-card" onclick="cambiarPantalla('view-seguridad')">
+                            <span class="icon">🛡️</span>
+                            <h3>Copias de Seguridad</h3>
+                            <p>Historial de respaldos automáticos de turnos.</p>
+                        </div>
+                        <div class="menu-card" onclick="cambiarPantalla('view-compartir')" style="border-color: var(--primary);">
+                            <span class="icon">🔗</span>
+                            <h3 style="color: var(--primary);">Compartir Acceso</h3>
+                            <p>Generación de enlace de transferencia y código QR.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="content-container">
 
-            <div id="equipos" class="tab-content active">
-                <div class="card-3d">
+            <!-- ================= PANTALLA 1: EQUIPOS ================= -->
+            <div id="view-equipos" class="view-panel">
+                <button class="btn-back" onclick="cambiarPantalla('view-inicio')">🏠 Volver al Inicio</button>
+                <div class="card-flat">
                     <h2>➕ Registrar Nuevo Módulo Analítico</h2>
                     <div class="form-grid">
                         <input type="text" id="eqPno" placeholder="PNO (Ej: PNO-CQUI-102)">
@@ -138,9 +216,10 @@
                     </div>
                 </div>
             </div>
-
-            <div id="insumos" class="tab-content">
-                <div class="card-3d">
+<!-- ================= PANTALLA 2: INSUMOS ================= -->
+            <div id="view-insumos" class="view-panel">
+                <button class="btn-back" onclick="cambiarPantalla('view-inicio')">🏠 Volver al Inicio</button>
+                <div class="card-flat">
                     <h2>📦 Ingreso de Reactivos y Lotes</h2>
                     <div class="form-grid">
                         <select id="insCat"><option>Materia Prima</option><option>Reactivo</option><option>Estándar de Ref.</option></select>
@@ -162,8 +241,10 @@
                 </div>
             </div>
 
-            <div id="bitacora" class="tab-content">
-                <div class="card-3d">
+            <!-- ================= PANTALLA 3: BITÁCORA ================= -->
+            <div id="view-bitacora" class="view-panel">
+                <button class="btn-back" onclick="cambiarPantalla('view-inicio')">🏠 Volver al Inicio</button>
+                <div class="card-flat">
                     <h2>📝 Asignar Ensayo Farmacéutico</h2>
                     <div class="form-grid">
                         <input type="text" id="anDate" placeholder="Fecha">
@@ -186,22 +267,26 @@
                 </div>
             </div>
 
-            <div id="seguridad" class="tab-content">
-                <div class="card-3d">
+            <!-- ================= PANTALLA 4: SEGURIDAD ================= -->
+            <div id="view-seguridad" class="view-panel">
+                <button class="btn-back" onclick="cambiarPantalla('view-inicio')">🏠 Volver al Inicio</button>
+                <div class="card-flat">
                     <h2>🛡️ Historial de Copias Automáticas Diarias</h2>
-                    <p style="font-size:13px; color:var(--text-muted);">Each system shift change saves an instant backup copy straight to your browser's persistent storage.</p>
+                    <p style="font-size:13px; color:var(--text-muted);">Cada cambio de turno del sistema guarda un respaldo instantáneo en el almacenamiento local.</p>
                     <div class="backup-list" id="listaRespaldosDiarios"></div>
                 </div>
             </div>
 
-            <div id="compartir" class="tab-content">
-                <div class="card-3d">
+            <!-- ================= PANTALLA 5: COMPARTIR ACCESO ================= -->
+            <div id="view-compartir" class="view-panel">
+                <button class="btn-back" onclick="cambiarPantalla('view-inicio')">🏠 Volver al Inicio</button>
+                <div class="card-flat">
                     <h2>🔗 Transferencia Inmediata del Sistema</h2>
-                    <p style="font-size:13px; color:var(--text-muted); margin-bottom: 20px;">Utiliza estos accesos rápidos para abrir tu WhatsApp con el link del proyecto ya preparado, enviarlo por Correo o copiar la localización actual de manera directa.</p>
+                    <p style="font-size:13px; color:var(--text-muted); margin-bottom: 20px;">Utilice los siguientes accesos directos de conectividad para auditorías rápidas:</p>
                     
                     <div class="share-layout">
                         <div>
-                            <h3 style="color:white; font-size:14px; margin-bottom:10px;">Localización Actual de la Plataforma:</h3>
+                            <h3 style="color:var(--text-main); font-size:14px; margin-bottom:10px;">Localización de la Plataforma:</h3>
                             <div class="link-box">
                                 <span id="currentUrlDisplay" style="color:var(--primary); font-family:monospace; font-size:12px;">Generando enlace...</span>
                             </div>
@@ -209,13 +294,13 @@
                             <div class="share-buttons-container">
                                 <button onclick="compartirWhatsApp()" class="btn-share" style="background: #25D366; color: white;">💬 Enviar por WhatsApp</button>
                                 <button onclick="compartirCorreo()" class="btn-share" style="background: #ea4335; color: white;">✉️ Enviar por Correo Electrónico</button>
-                                <button onclick="copiarUrlAlPortapapeles()" class="btn-share" style="background: var(--primary); color: #000;">📋 Copiar Link al Portapapeles</button>
+                                <button onclick="copiarUrlAlPortapapeles()" class="btn-share" style="background: var(--primary); color: white;">📋 Copiar Link al Portapapeles</button>
                             </div>
                         </div>
                         
                         <div style="display:flex; flex-direction:column; align-items:center; gap:10px;">
                             <div class="qr-display" id="qrcode"></div>
-                            <span style="font-size:11px; letter-spacing:1px; color:var(--accent); font-weight:bold;">CÓDIGO QR MATRICIAL</span>
+                            <span style="font-size:11px; letter-spacing:1px; color:var(--primary); font-weight:bold;">CÓDIGO QR MATRICIAL</span>
                         </div>
                     </div>
                 </div>
@@ -248,7 +333,6 @@
         window.onload = function() {
             ejecutarVerificacionRespaldoDiario();
             renderizarTodo();
-            activarEfectoGiro3D();
             configurarModuloCompartir();
         };
 
@@ -256,20 +340,14 @@
             localStorage.setItem('LIMS_3D_SECURE', JSON.stringify(bd));
         }
 
-        /* NAVEGACIÓN TOTALMENTE REPARADA */
-        function openTab(evt, tabName) {
-            const contents = document.getElementsByClassName("tab-content");
-            for (let i = 0; i < contents.length; i++) {
-                contents[i].classList.remove("active");
+        /* MANEJADOR EXCLUSIVO DE NAVEGACIÓN TOTAL ENTRE PANTALLAS */
+        function cambiarPantalla(idPantalla) {
+            const paneles = document.getElementsByClassName("view-panel");
+            for (let i = 0; i < paneles.length; i++) {
+                paneles[i].classList.remove("active-view");
             }
-            
-            const buttons = document.getElementsByClassName("tab-btn");
-            for (let i = 0; i < buttons.length; i++) {
-                buttons[i].classList.remove("active");
-            }
-            
-            document.getElementById(tabName).classList.add("active");
-            evt.currentTarget.classList.add("active");
+            document.getElementById(idPantalla).classList.add("active-view");
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function configurarModuloCompartir() {
@@ -280,23 +358,22 @@
                 text: urlActual,
                 width: 120,
                 height: 120,
-                colorDark : "#020617",
+                colorDark : "#0044cc",
                 colorLight : "#ffffff",
                 correctLevel : QRCode.CorrectLevel.H
             });
         }
 
-        /* PROGRAMACIÓN DE APIS INTEGRADA PARA WHATSAPP Y CORREO */
         function compartirWhatsApp() {
             const urlActual = window.location.href;
-            const textoMensaje = encodeURIComponent(`🔬 ¡Hola! Te comparto el link de acceso a la plataforma interactiva del Laboratorio LIMS 4.0 Pro: ${urlActual}`);
+            const textoMensaje = encodeURIComponent(`🔬 ¡Hola! Te comparto el link de acceso a la plataforma del Laboratorio LIMS 4.0 Pro: ${urlActual}`);
             window.open(`https://api.whatsapp.com/send?text=${textoMensaje}`, '_blank');
         }
 
         function compartirCorreo() {
             const urlActual = window.location.href;
             const asunto = encodeURIComponent("Acceso a Sistema LIMS 4.0 - Química en Línea");
-            const cuerpo = encodeURIComponent(`Estimado evaluador,\n\nAdjunto el enlace correspondiente para visualizar el sistema interactivo de gestión analítica LIMS 4.0 Pro:\n\n${urlActual}\n\nQuedo atento a sus valiosos comentarios.`);
+            const cuerpo = encodeURIComponent(`Estimado evaluador,\n\nAdjunto el enlace correspondiente para visualizar el sistema interactivo de gestión analítica LIMS 4.0 Pro:\n\n${urlActual}`);
             window.location.href = `mailto:?subject=${asunto}&body=${cuerpo}`;
         }
 
@@ -339,10 +416,10 @@
                 contenedor.innerHTML += `
                     <div class="backup-item">
                         <div>
-                            <span style="color:var(--accent); font-weight:bold;">📅 Copia de Seguridad Automática</span>
+                            <span style="color:var(--primary); font-weight:bold;">📅 Copia de Seguridad Automática</span>
                             <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">Almacenada el ${respaldo.fecha} a las ${respaldo.timestamp}</div>
                         </div>
-                        <span style="font-size:12px; color:var(--primary); font-weight:bold;">✓ Protegido de forma local</span>
+                        <span style="font-size:12px; color:var(--accent); font-weight:bold;">✓ Protegido de forma local</span>
                     </div>
                 `;
             });
@@ -355,25 +432,16 @@
             renderRespaldosDiarios();
         }
 
-        function activarEfectoGiro3D() {
-            const stage = document.getElementById('spaceStage');
-            document.addEventListener('mousemove', (e) => {
-                const rotacionX = (window.innerHeight / 2 - e.clientY) / 35;
-                const rotacionY = (window.innerWidth / 2 - e.clientX) / -35;
-                stage.style.transform = `rotateX(${rotacionX}deg) rotateY(${rotacionY}deg)`;
-            });
-        }
-
         function renderEquipos() {
             const tbody = document.getElementById('dataEquipos'); tbody.innerHTML = "";
             bd.equipos.forEach((eq, idx) => {
                 let badge = eq.enUso ? `<span class="badge badge-uso">En Uso</span>` : `<span class="badge badge-disponible">Disponible</span>`;
                 let accion = eq.enUso ? 
-                    `<button onclick="liberarEquipo(${idx})" style="background:#e74c3c; padding:6px 12px; border:none; border-radius:6px; cursor:pointer;">Liberar</button>` :
+                    `<button onclick="liberarEquipo(${idx})" style="background:#e74c3c; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer;">Liberar</button>` :
                     `<div style="display:flex; gap:5px;">
                         <select id="title-${idx}" style="padding:4px; font-size:11px;"><option>Ing. Químico</option><option>Q.F.B.</option><option>Q.F.I.</option></select>
                         <input type="text" id="user-${idx}" placeholder="Analista" style="padding:4px; width:80px; font-size:11px;">
-                        <button onclick="ocuparEquipo(${idx})" style="background:var(--accent); color:#000; font-weight:bold; padding:4px 8px; border:none; border-radius:6px; cursor:pointer;">✔</button>
+                        <button onclick="ocuparEquipo(${idx})" style="background:var(--primary); color:#fff; font-weight:bold; padding:4px 8px; border:none; border-radius:6px; cursor:pointer;">✔</button>
                      </div>`;
 
                 tbody.innerHTML += `<tr><td><strong>${eq.pno}</strong></td><td>${eq.desc}</td><td>${eq.mod}</td><td>${eq.cal}</td><td>${badge}</td><td>${eq.usuario || 'Libre'}</td><td>${accion}</td></tr>`;
@@ -404,7 +472,7 @@
         function renderInsumos() {
             const tbody = document.getElementById('dataInsumos'); tbody.innerHTML = "";
             bd.insumos.forEach(ins => {
-                let clase = ins.alerta === 'warning' ? 'status-warning' : (ins.alerta === 'danger' ? 'status-danger' : '');
+                let clase = ins.alerta === 'warning' ? 'alerta-warning' : (ins.alerta === 'danger' ? 'alerta-danger' : '');
                 tbody.innerHTML += `<tr class="${clase}"><td>${ins.cat}</td><td><strong>${ins.desc}</strong></td><td>${ins.lote}</td><td>${ins.stock}</td><td>${ins.alerta.toUpperCase()}</td></tr>`;
             });
         }
